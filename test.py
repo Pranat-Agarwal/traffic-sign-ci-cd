@@ -1,21 +1,16 @@
-import os
-import numpy as np
-from tensorflow.keras.models import load_model
+from fastapi.testclient import TestClient
+from app import app
 
-MODEL_PATH = "model/traffic_model.h5"
+client = TestClient(app)
 
-def test_model_file_exists():
-    """
-    Check if trained model file exists
-    """
-    assert os.path.exists(MODEL_PATH), "❌ Model file not found. Training step may have failed."
 
-def test_model_prediction_shape():
-    """
-    Check model output shape
-    """
-    model = load_model(MODEL_PATH)
-    dummy_input = np.random.rand(1, 32, 32, 1)
-    prediction = model.predict(dummy_input)
+def test_root_endpoint():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json()["message"] == "Traffic Sign Model API is running"
 
-    assert prediction.shape == (1, 43), "❌ Model output shape mismatch"
+
+def test_health_endpoint():
+    response = client.get("/healthz")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"

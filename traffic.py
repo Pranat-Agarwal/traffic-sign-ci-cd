@@ -1,30 +1,28 @@
 import numpy as np
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, AveragePooling2D, Dense, Flatten
+from tensorflow.keras.models import load_model
+import os
 
-def preprocess_data(x):
-    """
-    Convert RGB images to grayscale and normalize
-    """
-    x_gray = np.sum(x / 3, axis=3, keepdims=True)
-    x_norm = (x_gray - 128) / 128
-    return x_norm
+MODEL_PATH = "model/traffic_model.h5"
 
-def build_cnn_model():
-    """
-    Build CNN model
-    """
-    model = Sequential()
 
-    model.add(Conv2D(6, (5,5), activation='relu', input_shape=(32,32,1)))
-    model.add(AveragePooling2D((2,2)))
+def load_traffic_model():
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError("Model file not found")
+    return load_model(MODEL_PATH)
 
-    model.add(Conv2D(16, (5,5), activation='relu'))
-    model.add(AveragePooling2D((2,2)))
 
-    model.add(Flatten())
-    model.add(Dense(120, activation='relu'))
-    model.add(Dense(84, activation='relu'))
-    model.add(Dense(43, activation='softmax'))
+def preprocess_image(image):
+    img = np.array(image, dtype=np.float32)
 
-    return model
+    # Ensure correct shape
+    img = img.reshape(1, 32, 32, 1)
+
+    # Normalize (same as training)
+    img = (img - 128) / 128
+    return img
+
+
+def predict_image(model, image):
+    img = preprocess_image(image)
+    prediction = model.predict(img)
+    return int(np.argmax(prediction))

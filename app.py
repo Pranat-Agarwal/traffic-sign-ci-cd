@@ -1,17 +1,26 @@
 from fastapi import FastAPI
-import numpy as np
-from tensorflow.keras.models import load_model
+from traffic import load_traffic_model, predict_image
 
-app = FastAPI()
+app = FastAPI(title="Traffic Sign CI/CD API")
 
-model = load_model("model/traffic_model.h5")
+# Load model once at startup
+model = load_traffic_model()
+
 
 @app.get("/")
 def home():
     return {"message": "Traffic Sign Model API is running"}
 
+
+@app.get("/healthz")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/predict")
 def predict(image: list):
-    img = np.array(image).reshape(1, 32, 32, 1)
-    prediction = model.predict(img)
-    return {"predicted_class": int(np.argmax(prediction))}
+    """
+    Expects image as a 32x32 grayscale image flattened or nested list
+    """
+    predicted_class = predict_image(model, image)
+    return {"predicted_class": predicted_class}
